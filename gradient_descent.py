@@ -4,6 +4,20 @@ import plotly.graph_objs as go
 from plotly.tools import make_subplots
 from ipywidgets import VBox, IntSlider, FloatSlider, Dropdown
 
+def configure_plotly_browser_state():
+    import IPython
+    display(IPython.core.display.HTML('''
+        <script src="/static/components/requirejs/require.js"></script>
+        <script>
+          requirejs.config({
+            paths: {
+              base: '/static/base',
+              plotly: 'https://cdn.plot.ly/plotly-latest.min.js?noext',
+            },
+          });
+        </script>
+        '''))
+    
 def convex_j(w):
     return w ** 2
 
