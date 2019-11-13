@@ -2,7 +2,6 @@ from copy import deepcopy
 import numpy as np
 import plotly.graph_objs as go
 from plotly.tools import make_subplots
-from plotly.offline import init_notebook_mode
 
 def configure_plotly_browser_state():
     import IPython
@@ -17,7 +16,6 @@ def configure_plotly_browser_state():
           });
         </script>
         '''))
-    init_notebook_mode(connected=False)
     
 def convex_j(w):
     return w ** 2
