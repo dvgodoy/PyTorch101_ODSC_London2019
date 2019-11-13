@@ -1,118 +1,97 @@
+from copy import deepcopy
 import numpy as np
 import plotly.graph_objs as go
 from plotly.tools import make_subplots
-from ipywidgets import VBox, interactive, IntSlider, Checkbox, FloatLogSlider, Button, FloatSlider, HBox, Dropdown
+from ipywidgets import VBox, IntSlider, FloatSlider, Dropdown
 
-def build_figure_deriv():
+def convex_j(w):
+    return w ** 2
+
+def convex_djdw(w):
+    return 2 * w
+
+def nonconvex_j(w):
+    return np.sin(w*3) + w**2 + 1
+
+def nonconvex_djdw(w):
+    return 3*np.cos(w*3) + 2*w
+
+def build_fig(func, lr, w0=2, n_steps=10):
     w = np.linspace(-2, 2, 100)
 
-    def convex_j(w):
-        return w ** 2
+    if func == 'Convex':
+        j = convex_j
+        djdw = convex_djdw
+    else:
+        j = nonconvex_j
+        djdw = nonconvex_djdw
 
-    def convex_djdw(w):
-        return 2 * w
-
-    def nonconvex_j(w):
-        return np.sin(w*3) + w**2
-
-    def nonconvex_djdw(w):
-        return 3*np.cos(w*3) + 2*w
-
-    j = convex_j
-    djdw = convex_djdw
-
-    w0 = -2
-    lr = .2
     delta = lr * djdw(w0)
 
-    traces = [go.Scatter(x=w, y=j(w), mode='lines', line={'color': 'black'}, showlegend=False),
-             go.Scatter(x=[w0], y=[j(w0)], marker={'color': 'black'}, name='w before'),
+    traces = [go.Scatter(x=w, y=j(w), mode='lines', line={'color': 'black'}, showlegend=False)]
+    
+    template_traces = [go.Scatter(x=[w0], y=[j(w0)], marker={'color': 'black'}, name='w before'),
              go.Scatter(x=[w0-delta], y=[j(w0-delta)], marker={'color': 'red'}, name='w after'),
              go.Scatter(x=[w0-delta, w0-delta], y=[j(w0), j(w0-delta)], showlegend=False, mode='lines', line={'color': 'gray', 'dash': 'dot'}),
              go.Scatter(x=[w0, w0-delta], y=[j(w0-delta), j(w0-delta)], showlegend=False, mode='lines', line={'color': 'gray', 'dash': 'dot'}),
              go.Scatter(x=[w0, w0-delta], y=[j(w0), j(w0-delta)], showlegend=False, mode='lines', line={'color': 'red', 'width': 2, 'dash': 'dash'}),
-             go.Scatter(x=[w0, w0-delta], y=[j(w0), j(w0)], mode='lines', line={'color': 'red'}, name='- lr * dJ/dw(w)'),
-             go.Scatter(x=[w0, w0], y=[j(w0), j(w0-delta)], showlegend=False, mode='lines', line={'color': 'gray'})]
+             go.Scatter(x=[w0, w0-delta], y=[j(w0), j(w0)], mode='lines', line={'color': 'red'}, name='update'),
+             go.Scatter(x=[w0, w0], y=[j(w0), j(w0-delta)], mode='lines', line={'color': 'gray'}, name='loss change')]
+    
+    data = deepcopy(template_traces)
+    
+    traces.extend(data)
+    
+    for i in range(n_steps):
+        w0, j0 = data[1].x[0], data[1].y[0]
+        data = deepcopy(template_traces)
 
-    fig = go.Figure(traces, layout={'title': 'Gradient Descent',
-                                    'width': 600, 'height': 600, 'xaxis': {'zeroline': False, 'title': 'Feature'},
-                                    'yaxis': {'title': 'Loss'}})
-    f = go.FigureWidget(fig)
+        delta = lr * djdw(w0)
+        w1 = w0-delta
+        j1 = j(w1)
+        data[0].x = [w0]
+        data[0].y = [j0]
+        data[1].x = [w1]
+        data[1].y = [j1]
+        data[2].x = [w1, w1]
+        data[2].y = [j0, j1]
+        data[3].x = [w0, w1]
+        data[3].y = [j1, j1]
+        data[4].x = [w0, w1]
+        data[4].y = [j0, j1]
+        data[5].x = [w0, w1]
+        data[5].y = [j0, j0]
+        data[6].x = [w0, w0]
+        data[6].y = [j0, j1]
+        for k in range(7):
+            data[k].visible = False
+        traces.extend(data)
+        
+    steps = []
+    for i in range(n_steps):
+        step = dict(
+            method = 'restyle',
+            args = ['visible', [True] + [False] * ((n_steps + 1) * 7)],
+        )
+        for j in range(i * 7 + 1, i * 7 + 8):
+            step['args'][1][j] = True
+        steps.append(step)
+        
+    sliders = [dict(
+        active = 0,
+        currentvalue = {'prefix': 'Update: '},
+        pad = {'t': 50},
+        steps = steps
+    )]
 
-    functype = Dropdown(description='Function', options=['Convex', 'Non-convex'], value='Convex')
-    bt_reset = Button(description='Reset')
-    bt_step = Button(description='Step')
-    lrate = FloatSlider(description='Learning Rate', value=.05, min=.05, max=1.1, step=.05)
+    fig = go.Figure(traces, layout={'title': 'Gradient Descent - Learning Rate = {:.2f}'.format(lr),
+                                    'width': 600, 'height': 600, 
+                                    'xaxis': {'zeroline': False, 'title': 'Feature (w)', 'range': [-2.1, 2.1]},
+                                    'yaxis': {'title': 'Loss', 'range': [-.1, 6]},
+                                    'sliders': sliders})
+    return fig
 
-    def update2(functype):
-        if functype == 'Convex':
-            j = convex_j
-        else:
-            j = nonconvex_j
-
-        #w0 = np.random.rand() * 4 - 2
-        w0 = -1.5
-        j0 = j(w0)
-        with f.batch_update():
-            f.data[0].y = j(f.data[0].x)
-            for i in range(2, 8):
-                f.data[i].visible = False
-            f.data[1].x = [w0]
-            f.data[1].y = [j0]
-            f.data[2].x = [w0]
-            f.data[2].y = [j0]
-
-    def update(b):
-        if functype.value == 'Convex':
-            j = convex_j
-            djdw = convex_djdw
-        else:
-            j = nonconvex_j
-            djdw = nonconvex_djdw
-
-        if b == bt_reset:
-            ##w0 = np.random.rand() * 4 - 2
-            w0 = -1.5
-            j0 = j(w0)
-            with f.batch_update():
-                f.data[0].y = j(f.data[0].x)
-                for i in range(2, 8):
-                    f.data[i].visible = False
-                f.data[1].x = [w0]
-                f.data[1].y = [j0]
-                f.data[2].x = [w0]
-                f.data[2].y = [j0]
-        else:
-            w0, j0 = f.data[2].x[0], f.data[2].y[0]
-            lr = lrate.value
-            delta = lr * djdw(w0)
-            w1 = w0-delta
-            j1 = j(w1)
-            with f.batch_update():
-                for i in range(2, 8):
-                    f.data[i].visible = True
-                f.data[1].x = [w0]
-                f.data[1].y = [j0]
-                f.data[2].x = [w1]
-                f.data[2].y = [j1]
-                f.data[3].x = [w1, w1]
-                f.data[3].y = [j0, j1]
-                f.data[4].x = [w0, w1]
-                f.data[4].y = [j1, j1]
-                f.data[5].x = [w0, w1]
-                f.data[5].y = [j0, j1]
-                f.data[6].x = [w0, w1]
-                f.data[6].y = [j0, j0]
-                f.data[7].x = [w0, w0]
-                f.data[7].y = [j0, j1]
-
-    bt_step.on_click(update)
-    bt_reset.on_click(update)
-
-    update(bt_reset)
-    return (f, interactive(update2, functype=functype), HBox((bt_reset, bt_step)), lrate)
-
-def interactive_gd():
-    interactive_gd = VBox(build_figure_deriv())
-    interactive_gd.layout.align_items = 'center'
-    return interactive_gd
+w0 = FloatSlider(description='Start', value=-1.5, min=-2, max=2, step=.05)
+functype = Dropdown(description='Function', options=['Convex', 'Non-Convex'], value='Convex')
+lrate = FloatSlider(description='Learning Rate', value=.05, min=.05, max=1.1, step=.05)
+n_steps = IntSlider(description='# updates', value=10, min=10, max=20, step=1)
