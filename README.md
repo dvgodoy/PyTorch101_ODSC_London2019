@@ -18,7 +18,7 @@ If you'd rather use a local environment, please follow these steps (assuming you
 
 - Install PyTorch: https://pytorch.org/get-started/locally/
 
-- Install other packages: `conda install scikit-learn==0.21.3 matplotlib==3.1.1 jupyter -c anaconda`
+- Install other packages: `conda install scikit-learn==0.21.3 matplotlib==3.1.1 jupyter==1.0.0 ipywidgets==7.5.1 plotly==4.1.1 -c anaconda`
 
 - Install torchviz: `pip install torchviz`
 
