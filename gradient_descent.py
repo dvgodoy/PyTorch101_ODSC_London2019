@@ -2,7 +2,7 @@ from copy import deepcopy
 import numpy as np
 import plotly.graph_objs as go
 from plotly.tools import make_subplots
-from ipywidgets import VBox, IntSlider, FloatSlider, Dropdown
+from plotly.offline import init_notebook_mode
 
 def configure_plotly_browser_state():
     import IPython
@@ -17,6 +17,7 @@ def configure_plotly_browser_state():
           });
         </script>
         '''))
+    init_notebook_mode(connected=False)
     
 def convex_j(w):
     return w ** 2
@@ -104,8 +105,3 @@ def build_fig(func, lr, w0=2, n_steps=10):
                                     'yaxis': {'title': 'Loss', 'range': [-.1, 6]},
                                     'sliders': sliders})
     return fig
-
-w0 = FloatSlider(description='Start', value=-1.5, min=-2, max=2, step=.05)
-functype = Dropdown(description='Function', options=['Convex', 'Non-Convex'], value='Convex')
-lrate = FloatSlider(description='Learning Rate', value=.05, min=.05, max=1.1, step=.05)
-n_steps = IntSlider(description='# updates', value=10, min=10, max=20, step=1)
