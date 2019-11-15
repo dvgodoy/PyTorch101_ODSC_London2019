@@ -22,3 +22,6 @@ If you'd rather use a local environment, please follow these steps (assuming you
 
 - Install torchviz: `pip install torchviz`
 
+- Clone this repo: `git clone https://github.com/dvgodoy/PyTorch101_ODSC_London2019.git`
+
+- Start Jupyter: `jupyter notebook`
