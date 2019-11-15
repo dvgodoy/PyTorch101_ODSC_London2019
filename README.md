@@ -6,7 +6,7 @@ The main goal of this session is to show you how PyTorch works: we will start wi
 
 We will use Google Colab and work our way together into building a complete model in PyTorch. You should be comfortable using Jupyter notebooks, Numpy and, preferably, object oriented programming.
 
-Open it in Google Colab [PyTorch101.ipynb](https://colab.research.google.com/github/dvgodoy/PyTorch101_ODSC_London2019/blob/master/PyTorch101.ipynb).
+Open it in Google Colab [PyTorch101_Colab.ipynb](https://colab.research.google.com/github/dvgodoy/PyTorch101_ODSC_London2019/blob/master/PyTorch101_Colab.ipynb).
 
 If you'd rather use a local environment, please follow these steps (assuming you use Anaconda):
 
